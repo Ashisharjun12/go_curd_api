@@ -1,8 +1,68 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/Ashisharjun12/go_curd_api/internal/config"
+)
 
 func main() {
 
-	fmt.Println("Hello, World!")
+	//config load
+	cfg := config.Mustload()
+
+	//db setup
+	//router setup
+
+	router := http.NewServeMux()
+
+	router.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("welcome to api..."))
+	})
+
+
+	//server setup
+	server := &http.Server{
+		Addr : cfg.Addr,
+		Handler: router,
+
+	}
+
+	done := make(chan os.Signal, 1)
+
+	signal.Notify(done, os.Interrupt, syscall.SIGINT,syscall.SIGALRM)
+
+
+	go func(){
+		err := server.ListenAndServe()
+	if err != nil {
+        slog.Info("server eror listen failed")
+    }
+
+	fmt.Println("server started...")
+
+	}()
+
+	<-done //wait for signal to stop the server
+
+	slog.Info("shuttinng down server")
+
+	ctx,cancel := context.WithTimeout(context.Background(),5*time.Second)
+	defer cancel()
+
+	err := server.Shutdown(ctx)
+
+	if err != nil {
+       slog.Error("failed to gracefully shutdown server", slog.String("error", err.Error()))
+    }
+
+	slog.Info("server shutdown completed")
+	
 }

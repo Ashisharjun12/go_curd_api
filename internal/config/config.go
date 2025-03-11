@@ -2,14 +2,14 @@ package config
 
 import (
 	"flag"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type HttpServer struct {
-	Addr string
+	Addr string `yaml:"address" env-required:"true"`
 }
 
 // env-default:"production" set at time of production
@@ -31,13 +31,13 @@ func Mustload() *Config{
 		configPath = *flags
 
 		if configPath == "" {
-            log.Fatal("config path is not set")
+            slog.Info("config path is not set")
         }
     }
 
 
 	if  _,err := os.Stat(configPath); os.IsNotExist(err){
-		log.Fatalf("config file %s does not exist", configPath)
+		slog.Info("config file  does not exist", slog.String("configpath", configPath))
 	}
 
 
@@ -45,7 +45,7 @@ func Mustload() *Config{
 	var cfg Config
 	err := cleanenv.ReadConfig(configPath,&cfg)
 	if err != nil {
-        log.Fatalf("failed to load config: %s", err.Error())
+        slog.Info("failed to load config:",slog.String("err",err.Error()))
     }
 
 	return &cfg
