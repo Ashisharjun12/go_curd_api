@@ -9,6 +9,7 @@ import (
 
 	"github.com/Ashisharjun12/go_curd_api/internal/types"
 	"github.com/Ashisharjun12/go_curd_api/internal/utils/response"
+	"github.com/go-playground/validator/v10"
 )
 
 func New() func(http.ResponseWriter, *http.Request) {
@@ -20,6 +21,13 @@ func New() func(http.ResponseWriter, *http.Request) {
 			response.WriteJson(w , http.StatusBadRequest , response.GeneralError(err))
 			return
 
+		}
+
+		//validator req
+		if err := validator.New().Struct(student); err != nil {
+			validateErrs := err.(validator.ValidationErrors)
+            response.WriteJson(w , http.StatusBadRequest , response.ValidationError(validateErrs))
+            return
 		}
 
 
